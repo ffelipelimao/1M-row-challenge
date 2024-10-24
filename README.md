@@ -1,6 +1,6 @@
 ## Challenge
 
-- 1M rows with les than 200ms with p99
+- 1M rows with less than 200ms with p99
 
 ## Proposal
 
