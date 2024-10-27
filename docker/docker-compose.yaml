@@ -37,3 +37,5 @@ services:
             - "9000:9000"
         environment: 
             KAFKA_BROKERCONNECT: kafka:9092
+
+## TODO: Criar Dockerfile para api e worker e subir eles no docker-compose para ter as duas instancias de cada no ar para fazer o load balance
