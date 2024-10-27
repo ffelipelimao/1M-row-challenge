@@ -8,28 +8,28 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type CreateSurveyUseCase interface {
+type PublisherSurveyUseCase interface {
 	Create(survey *entities.Survey) error
 }
 
-type CreateHandlerSurvey struct {
-	createSurveyUseCase CreateSurveyUseCase
+type PublisherSurveyHandler struct {
+	publisherSurveyUseCase PublisherSurveyUseCase
 }
 
-func NewCreateSurveyHandler(createSurveyUseCase CreateSurveyUseCase) *CreateHandlerSurvey {
-	return &CreateHandlerSurvey{
-		createSurveyUseCase: createSurveyUseCase,
+func NewPublisherSurveyHandler(publisherSurveyUseCase PublisherSurveyUseCase) *PublisherSurveyHandler {
+	return &PublisherSurveyHandler{
+		publisherSurveyUseCase: publisherSurveyUseCase,
 	}
 }
 
-func (cs *CreateHandlerSurvey) Handle(c echo.Context) error {
+func (cs *PublisherSurveyHandler) Handle(c echo.Context) error {
 	s := new(entities.Survey)
 	if err := c.Bind(s); err != nil {
 		return c.String(http.StatusBadRequest, "bad request")
 	}
 	s.ID = uuid.NewString()
 
-	err := cs.createSurveyUseCase.Create(s)
+	err := cs.publisherSurveyUseCase.Create(s)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}

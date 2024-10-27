@@ -10,17 +10,17 @@ type SurveyPublisher interface {
 	Publish(msg []byte) error
 }
 
-type CreateSurveyUseCase struct {
+type PublisherSurveyUseCase struct {
 	surveyPublisher SurveyPublisher
 }
 
-func NewCreateSurveyUseCase(surveyPublisher SurveyPublisher) *CreateSurveyUseCase {
-	return &CreateSurveyUseCase{
+func NewPublisherSurveyUseCase(surveyPublisher SurveyPublisher) *PublisherSurveyUseCase {
+	return &PublisherSurveyUseCase{
 		surveyPublisher: surveyPublisher,
 	}
 }
 
-func (cs *CreateSurveyUseCase) Create(survey *entities.Survey) error {
+func (cs *PublisherSurveyUseCase) Create(survey *entities.Survey) error {
 	surveyMessage, err := json.Marshal(survey)
 	if err != nil {
 		return err

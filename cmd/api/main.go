@@ -23,11 +23,11 @@ func main() {
 
 	defer publisherSurvey.Stop()
 
-	createSurveyUseCase := usecases.NewCreateSurveyUseCase(publisherSurvey)
-	createSurveyHandler := handlers.NewCreateSurveyHandler(createSurveyUseCase)
+	publisherSurveyUseCase := usecases.NewPublisherSurveyUseCase(publisherSurvey)
+	publisherSurveyHandler := handlers.NewPublisherSurveyHandler(publisherSurveyUseCase)
 
 	// Routes
-	e.POST("/survey", createSurveyHandler.Handle)
+	e.POST("/survey", publisherSurveyHandler.Handle)
 
 	e.Start(":8080")
 }
