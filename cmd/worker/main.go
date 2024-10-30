@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/ffelipelimao/survey/internal/consumer"
@@ -35,5 +36,6 @@ func main() {
 	}
 	defer consumer.Stop()
 
+	fmt.Println("Worker Starting...")
 	consumer.Start()
 }

@@ -6,3 +6,7 @@ type Survey struct {
 	UserID     string  `json:"user_id"`
 	Rating     float32 `json:"rating"`
 }
+
+type SurveyAvg struct {
+	avg float32 `json:"avg"`
+}

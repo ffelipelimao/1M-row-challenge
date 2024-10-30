@@ -31,11 +31,27 @@ services:
               "sleep 5s && kafka-topics --create --topic=tp.create-survey --if-not-exists --bootstrap-server=kafka:9092"
     kafdrop:
         image: obsidiandynamics/kafdrop:latest
-        depends_on: 
+        depends_on:
             - kafka
-        ports: 
+        ports:
             - "9000:9000"
-        environment: 
+        environment:
             KAFKA_BROKERCONNECT: kafka:9092
+    db:
+        container_name: postgres-db
+        image: postgres:latest
+        environment:
+            - POSTGRES_USER=user
+            - POSTGRES_PASSWORD=pass
+            - POSTGRES_DB=survey-api
+        ports:
+            - "5432:5432"
+        volumes:
+            - survey-api:/var/lib/postgresql/data
+
+volumes:
+  survey-api:
+  localstack-data:
+    driver: local
 
 ## TODO: Criar Dockerfile para api e worker e subir eles no docker-compose para ter as duas instancias de cada no ar para fazer o load balance

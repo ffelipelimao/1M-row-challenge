@@ -3,14 +3,13 @@ package database
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 func NewDatabase() (*pgxpool.Pool, error) {
-	databaseURL := os.Getenv("DATABASE_URL")
+	databaseURL := "postgres://user:pass@localhost:5432/survey-api"
 
 	config, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {

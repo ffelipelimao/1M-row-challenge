@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/ffelipelimao/survey/internal/entities"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -54,4 +55,49 @@ func (r *SurveyPostgresRepository) SaveAvg(ctx context.Context, merchantID strin
 		return errors.New("nenhuma média foi atualizada")
 	}
 	return nil
+}
+
+func (r *SurveyPostgresRepository) ListSurveys(ctx context.Context, merchantID string) ([]*entities.Survey, error) {
+	query := `
+		SELECT id, merchant_id, user_id, rating
+		FROM surveys
+		WHERE merchant_id = $1
+	`
+	rows, err := r.db.Query(ctx, query, merchantID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	defer rows.Close()
+
+	var surveys []*entities.Survey
+	for rows.Next() {
+		var survey entities.Survey
+		err := rows.Scan(&survey.ID, &survey.MerchantID, &survey.UserID, &survey.Rating)
+		if err != nil {
+			return nil, err
+		}
+		surveys = append(surveys, &survey)
+	}
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	return surveys, nil
+}
+
+func (r *SurveyPostgresRepository) GetAvgRating(ctx context.Context, merchantID string) (*entities.SurveyAvg, error) {
+	var avg entities.SurveyAvg
+	query := `
+		SELECT average_rating
+		FROM merchant_avg_ratings
+		WHERE merchant_id = $1
+	`
+	err := r.db.QueryRow(ctx, query, merchantID).Scan(&avg)
+	if err != nil {
+		return nil, err
+	}
+	return &avg, nil
 }

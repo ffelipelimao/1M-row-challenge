@@ -21,11 +21,11 @@ func NewSaveSurveyProcessor(saveSurveyUseCase SaveSurveyUseCase) *SaveSurveyProc
 	}
 }
 
-func (sp *SaveSurveyProcessor) Handle(ctx context.Context, msg string) error {
-	var survey *entities.Survey
-	err := json.Unmarshal([]byte(msg), survey)
+func (sp *SaveSurveyProcessor) Handle(ctx context.Context, msg []byte) error {
+	var survey entities.Survey
+	err := json.Unmarshal(msg, &survey)
 	if err != nil {
 		return err
 	}
-	return sp.saveSurveyUseCase.Create(ctx, survey)
+	return sp.saveSurveyUseCase.Create(ctx, &survey)
 }

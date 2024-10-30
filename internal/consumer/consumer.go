@@ -11,10 +11,10 @@ type Consumer struct {
 	ctx      context.Context
 	consumer *kafka.Consumer
 	topic    string
-	handler  func(ctx context.Context, msg string) error
+	handler  func(ctx context.Context, msg []byte) error
 }
 
-func New(ctx context.Context, topic string, handler func(ctx context.Context, msg string) error) (*Consumer, error) {
+func New(ctx context.Context, topic string, handler func(ctx context.Context, msg []byte) error) (*Consumer, error) {
 	configMap := &kafka.ConfigMap{
 		"bootstrap.servers": "kafka:9092",
 		"client.id":         "consumer-xx",
@@ -39,12 +39,17 @@ func New(ctx context.Context, topic string, handler func(ctx context.Context, ms
 
 func (c *Consumer) Start() {
 	for {
+
+		//-1 The call will block for at most `timeout` waiting for
+		// a new message or error. `timeout` may be set to -1 for
+		// indefinite wait.
+
 		msg, err := c.consumer.ReadMessage(-1)
-		if err == nil {
+		if err != nil {
 			fmt.Println("error to process message", err)
 		}
-		err = c.handler(c.ctx, msg.String())
-		if err == nil {
+		err = c.handler(c.ctx, msg.Value)
+		if err != nil {
 			fmt.Println("error to handle a message", err)
 		}
 	}
