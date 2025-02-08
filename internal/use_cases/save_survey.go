@@ -32,12 +32,16 @@ func (cs *SaveSurveyUseCase) Create(ctx context.Context, survey *entities.Survey
 		}
 	}
 
-	/*average := (survey.Rating + (average * float32(totalSurveys-1))) / float32(totalSurveys)
+	avgBefore, err := cs.surveyRepository.GetAvgRating(ctx, survey.MerchantID)
+	if err != nil {
+		return err
+	}
+
+	average := (survey.Rating + (avgBefore.Avg * float32(totalSurveys-1))) / float32(totalSurveys)
 
 	if err := cs.surveyRepository.SaveAvg(ctx, survey.ID, average); err != nil {
 		return err
 	}
-	*/
 
 	return nil
 }

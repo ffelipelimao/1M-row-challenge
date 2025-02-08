@@ -3,31 +3,26 @@ package consumer
 import (
 	"context"
 	"fmt"
+	"log"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/IBM/sarama"
 )
 
 type Consumer struct {
 	ctx      context.Context
-	consumer *kafka.Consumer
+	consumer sarama.Consumer
 	topic    string
 	handler  func(ctx context.Context, msg []byte) error
 }
 
 func New(ctx context.Context, topic string, handler func(ctx context.Context, msg []byte) error) (*Consumer, error) {
-	configMap := &kafka.ConfigMap{
-		"bootstrap.servers": "kafka:9092",
-		"client.id":         "consumer-xx",
-		"group.id":          "group-xx",
-	}
+	config := sarama.NewConfig()
+	config.Consumer.Return.Errors = true
 
-	consumer, err := kafka.NewConsumer(configMap)
+	consumer, err := sarama.NewConsumer([]string{"kafka:9092"}, config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create Kafka consumer: %w", err)
 	}
-
-	topics := []string{topic}
-	consumer.SubscribeTopics(topics, nil)
 
 	return &Consumer{
 		ctx:      ctx,
@@ -38,23 +33,42 @@ func New(ctx context.Context, topic string, handler func(ctx context.Context, ms
 }
 
 func (c *Consumer) Start() {
-	for {
+	partitions, err := c.consumer.Partitions(c.topic)
+	if err != nil {
+		log.Fatalf("failed to get partitions for topic %s: %v", c.topic, err)
+	}
 
-		//-1 The call will block for at most `timeout` waiting for
-		// a new message or error. `timeout` may be set to -1 for
-		// indefinite wait.
+	for _, partition := range partitions {
+		pc, err := c.consumer.ConsumePartition(c.topic, partition, sarama.OffsetNewest)
+		if err != nil {
+			log.Fatalf("failed to consume partition %d: %v", partition, err)
+		}
 
-		msg, err := c.consumer.ReadMessage(-1)
-		if err != nil {
-			fmt.Println("error to process message", err)
-		}
-		err = c.handler(c.ctx, msg.Value)
-		if err != nil {
-			fmt.Println("error to handle a message", err)
-		}
+		go func(pc sarama.PartitionConsumer) {
+			defer pc.AsyncClose()
+
+			for {
+				select {
+				case msg := <-pc.Messages():
+					// Handle the message
+					err := c.handler(c.ctx, msg.Value)
+					if err != nil {
+						log.Printf("error handling message: %v", err)
+					}
+				case err := <-pc.Errors():
+					// Log any errors
+					log.Printf("error consuming message: %v", err)
+				case <-c.ctx.Done():
+					// Stop consuming if the context is canceled
+					return
+				}
+			}
+		}(pc)
 	}
 }
 
 func (c *Consumer) Stop() {
-	c.consumer.Close()
+	if err := c.consumer.Close(); err != nil {
+		log.Printf("error closing Kafka consumer: %v", err)
+	}
 }

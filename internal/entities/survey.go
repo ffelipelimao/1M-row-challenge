@@ -8,5 +8,5 @@ type Survey struct {
 }
 
 type SurveyAvg struct {
-	avg float32 `json:"avg"`
+	Avg float32 `json:"avg"`
 }

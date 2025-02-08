@@ -4,70 +4,58 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/IBM/sarama"
 	"github.com/google/uuid"
 )
 
 type Publisher struct {
-	publisher           *kafka.Producer
-	producerEventChanel chan kafka.Event
-	topic               string
+	producer sarama.SyncProducer
+	topic    string
 }
 
 func New(topic string) (*Publisher, error) {
-	configMap := &kafka.ConfigMap{
-		"bootstrap.servers":   "kafka:9092",
-		"delivery.timeout.ms": "0",
-		"acks":                "all",
-	}
+	// Sarama configuration
+	config := sarama.NewConfig()
+	config.Producer.Return.Successes = true          // Ensure successes are returned
+	config.Producer.RequiredAcks = sarama.WaitForAll // Wait for all replicas to acknowledge
+	config.Producer.Retry.Max = 5                    // Retry up to 5 times
 
-	publisherKafka, err := kafka.NewProducer(configMap)
+	// Create a new sync producer
+	producer, err := sarama.NewSyncProducer([]string{"kafka:9094"}, config)
 	if err != nil {
-		fmt.Println("Error to create producer:", err)
-		return nil, err
+		return nil, fmt.Errorf("failed to create Kafka producer: %w", err)
 	}
 
 	return &Publisher{
-		publisher:           publisherKafka,
-		producerEventChanel: make(chan kafka.Event),
-		topic:               topic,
+		producer: producer,
+		topic:    topic,
 	}, nil
 }
 
 func (p *Publisher) Publish(msg []byte) error {
-	key := []byte(uuid.NewString())
+	// Generate a unique key for the message
+	key := uuid.NewString()
 
-	kafkaMsg := &kafka.Message{
-		Key:   key,
-		Value: msg,
-		TopicPartition: kafka.TopicPartition{
-			Topic:     &p.topic,
-			Partition: kafka.PartitionAny,
-		},
+	// Create a Kafka message
+	kafkaMsg := &sarama.ProducerMessage{
+		Topic: p.topic,
+		Key:   sarama.StringEncoder(key),
+		Value: sarama.ByteEncoder(msg),
 	}
 
-	err := p.publisher.Produce(kafkaMsg, p.producerEventChanel)
+	// Send the message
+	partition, offset, err := p.producer.SendMessage(kafkaMsg)
 	if err != nil {
-		log.Println(err.Error())
-		return err
+		return fmt.Errorf("failed to send message: %w", err)
 	}
 
-	go handleEventMessage(p.producerEventChanel)
-
+	// Log success
+	log.Printf("Message sent successfully! Topic: %s, Partition: %d, Offset: %d\n", p.topic, partition, offset)
 	return nil
 }
 
 func (p *Publisher) Stop() {
-	p.publisher.Close()
-}
-
-func handleEventMessage(channel chan kafka.Event) {
-	for e := range channel {
-		switch ev := e.(type) {
-		case *kafka.Message:
-			if ev.TopicPartition.Error != nil {
-				fmt.Println("error to send message")
-			}
-		}
+	if err := p.producer.Close(); err != nil {
+		log.Printf("error closing Kafka producer: %v", err)
 	}
 }

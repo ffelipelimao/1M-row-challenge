@@ -11,3 +11,34 @@ graph LR;
     Kafka --> Worker_1 & Worker_2
     Worker_1 & Worker_2 --> Database
 ```
+
+
+
+SURVEY
+│── cmd
+│   ├── api
+│   │   └── main.go
+│   ├── worker
+│   │   └── main.go
+│
+│── docker
+│   ├── api
+│   │   └── Dockerfile
+│   ├── worker
+│   │   ├── Dockerfile
+│   ├── docker-compose.yaml
+│   ├── seeds.sql
+│
+│── internal
+│   ├── consumer
+│   ├── database
+│   ├── entities
+│   ├── handlers
+│   ├── processor
+│   ├── publisher
+│   ├── repository
+│   ├── use_cases
+│
+│── go.mod
+│── go.sum
+│── README.md

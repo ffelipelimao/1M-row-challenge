@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/ffelipelimao/survey/internal/consumer"
 	"github.com/ffelipelimao/survey/internal/database"
@@ -13,7 +16,8 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	db, err := database.NewDatabase()
 	if err != nil {
@@ -35,6 +39,16 @@ func main() {
 		log.Fatal(err)
 	}
 	defer consumer.Stop()
+
+	// Handle graceful shutdown
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		sig := <-sigChan
+		fmt.Printf("Received signal: %v\n", sig)
+		cancel()
+	}()
 
 	fmt.Println("Worker Starting...")
 	consumer.Start()

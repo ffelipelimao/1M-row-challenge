@@ -9,7 +9,7 @@ import (
 )
 
 func NewDatabase() (*pgxpool.Pool, error) {
-	databaseURL := "postgres://user:pass@localhost:5432/survey-api"
+	databaseURL := "postgres://user:pass@db:5432/survey-api"
 
 	config, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
