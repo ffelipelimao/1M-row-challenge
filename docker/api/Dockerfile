@@ -1,14 +1,35 @@
-FROM golang:1.23 as base
+# Stage 1: Build the Go application
+FROM golang:1.21 as builder
 
+# Set the working directory inside the container
 WORKDIR /app
-COPY . /app
-RUN go mod download
-RUN CGO_ENABLED=0 GOOS=linux go build cmd/api/main.go -o api
 
-FROM alpine
-
+# Copy the Go module files
 COPY go.mod go.sum ./
+
+# Download all dependencies
+RUN go mod download
+
+# Copy the rest of the application code
+COPY . .
+
+# Build the Go application
+RUN CGO_ENABLED=0 GOOS=linux go build -o api ./cmd/api/main.go
+
+# Stage 2: Create a minimal Docker image
+FROM alpine:latest
+
+# Set the working directory inside the container
 WORKDIR /app
-COPY --from=base /app/main ./
+
+# Copy the binary from the builder stage
+COPY --from=builder /app/api ./api
+
+# Expose the port the application will run on
 EXPOSE 8080
-CMD [ "./api" ]
+
+# Make the binary executable
+RUN chmod +x ./api
+
+# Command to run the application
+CMD ["./api"]

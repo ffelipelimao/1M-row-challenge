@@ -4,14 +4,14 @@ services:
     api01: &api
         hostname: api01
         build:
-            context: .
+            context: ..
             dockerfile: docker/api/Dockerfile
         environment:
             - DB_HOST=db
             - DB_USER=user
-            - DB_PASS=123
-            - DB_NAME=bank
-            - DB_PORT=3306
+            - DB_PASS=pass
+            - DB_NAME=survey-api
+            - DB_PORT=5432
         ports:
             - "8081:8080"
         depends_on:
@@ -21,7 +21,7 @@ services:
         <<: *api
         hostname: api02
         build:
-            context: .
+            context: ..
             dockerfile: docker/worker/Dockerfile
         ports:
             - "8082:8080"
@@ -64,7 +64,7 @@ services:
             KAFKA_BROKERCONNECT: kafka:9092
     db:
         container_name: postgres-db
-        image: postgres:latest
+        image: postgres:16
         environment:
             - POSTGRES_USER=user
             - POSTGRES_PASSWORD=pass
@@ -79,4 +79,3 @@ volumes:
   localstack-data:
     driver: local
 
-## TODO: Criar Dockerfile para api e worker e subir eles no docker-compose para ter as duas instancias de cada no ar para fazer o load balance
